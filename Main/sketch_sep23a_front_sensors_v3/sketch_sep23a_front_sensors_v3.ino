@@ -33,9 +33,10 @@ float integral = 0;
 int threshold = 2500; 
 float error = 0;
 
-// --- ULTRASONIC SENSOR DATA (From Nano) ---
+// --- SENSOR HUB DATA (From Nano) ---
 long front_distance = 999;
 long right_distance = 999;
+String detected_color = "UNKNOWN";
 String nano_data = "";
 
 volatile int left_encoder_count = 0;
@@ -142,9 +143,24 @@ void loop() {
         if (c == '\n') {
             int f_index = nano_data.indexOf("F:");
             int r_index = nano_data.indexOf(",R:");
+            int c_index = nano_data.indexOf(",C:");
+            
             if (f_index != -1 && r_index != -1) {
                 front_distance = nano_data.substring(f_index + 2, r_index).toInt();
-                right_distance = nano_data.substring(r_index + 3).toInt();
+                
+                if (c_index != -1) {
+                    right_distance = nano_data.substring(r_index + 3, c_index).toInt();
+                    detected_color = nano_data.substring(c_index + 3); // Read to end of string
+                    detected_color.trim(); // Remove any invisible \r characters
+                } else {
+                    right_distance = nano_data.substring(r_index + 3).toInt();
+                }
+                
+                // Debug print so we can see the ESP32 getting the color data!
+                // (You can comment this out later if it spams too much)
+                Serial.print("ESP32 heard -> Front: "); Serial.print(front_distance);
+                Serial.print(" | Right: "); Serial.print(right_distance);
+                Serial.print(" | Color: "); Serial.println(detected_color);
             }
             nano_data = "";
         } else {
